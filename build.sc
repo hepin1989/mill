@@ -53,6 +53,11 @@ object Core extends MillModule {
         PathRef(dest)
       }
     }
+
+  override def organization = "com.lihaoyi"
+  override def name = "mill"
+  override def version = "0.0.1"
+  override def useFullScalaVersionForPublish = true
 }
 
 
@@ -115,6 +120,11 @@ object Bin extends MillModule {
         s"""exec java $$JAVA_OPTS -cp "$$0" mill.Main "$$@" """
     )
   }
+
+  override def organization = "com.lihaoyi"
+  override def name = "mill-scala"
+  override def version = "0.0.1"
+  override def useFullScalaVersionForPublish = true
 
   override def prependShellScript =
     "#!/usr/bin/env sh\n" +
