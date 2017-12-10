@@ -21,6 +21,7 @@ trait PomFile {
         xmlns ="http://maven.apache.org/POM/4.0.0">
 
         <modelVersion>4.0.0</modelVersion>
+        <groupId>{artifact.group}</groupId>
         <artifactId>{artifact.id}</artifactId>
         <packaging>jar</packaging>
         <description></description>

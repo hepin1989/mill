@@ -8,6 +8,7 @@ import mill.define.Task.{Module, TaskModule}
 import mill.eval.{PathRef, Result}
 import mill.modules.Jvm
 import mill.modules.Jvm.{createAssembly, createJar, interactiveSubprocess, subprocess}
+import mill.scalaplugin.publish._
 
 import Lib._
 trait TestScalaModule extends ScalaModule with TaskModule {
@@ -255,15 +256,24 @@ trait ScalaModule extends Module with TaskModule{ outer =>
   // build artifact name as "mill-2.12.4" instead of "mill-2.12"
   def useFullScalaVersionForPublish: Boolean = false
 
-  def publishLocal() = T.command {
-    import publish._
-    val file = jar()
+  def publish() = T.command {
+    val file = jar() // there should be sequence of files
     val scalaFull = scalaVersion()
     val scalaBin = scalaBinaryVersion()
-    val useFullVersion = useFullScalaVersionForPublish
     val deps = ivyDeps()
     val dependencies = deps.map(d => Artifact.fromDep(d, scalaFull, scalaBin))
-    val artScalaVersion = if (useFullVersion) scalaFull else scalaBin
+    val artScalaVersion = if (useFullScalaVersionForPublish) scalaFull else scalaBin
+    val artifact = ScalaArtifact(organization(), name(), version(), artScalaVersion)
+    Sonatype.publish(file.path, artifact, dependencies)(T.ctx().log)
+  }
+
+  def publishLocal() = T.command {
+    val file = jar() // there should be sequence of files
+    val scalaFull = scalaVersion()
+    val scalaBin = scalaBinaryVersion()
+    val deps = ivyDeps()
+    val dependencies = deps.map(d => Artifact.fromDep(d, scalaFull, scalaBin))
+    val artScalaVersion = if (useFullScalaVersionForPublish) scalaFull else scalaBin
     val artifact = ScalaArtifact(organization(), name(), version(), artScalaVersion)
     LocalPublisher.publish(file, artifact, dependencies)
   }
