@@ -219,6 +219,28 @@ trait ScalaModule extends Module with TaskModule{ outer =>
     PathRef(dest)
   }
 
+  def docsJar = T{
+    val outDir = T.ctx().dest
+    mkdir(outDir)
+
+    val javadocDir = outDir / 'javadoc
+    mkdir(javadocDir)
+
+    val options = {
+      val files = ls.rec(sources().path).filter(_.isFile).map(_.toNIO.toString)
+      files ++ Seq("-d", javadocDir.toNIO.toString, "-usejavacp")
+    }
+
+    val jarName = s"${name()}-${version()}-javadoc.jar"
+
+    subprocess(
+      "scala.tools.nsc.ScalaDoc",
+      compileDepClasspath().filterNot(_.path.ext == "pom").map(_.path),
+      options = options
+    )
+    createJar(outDir / jarName, Seq(javadocDir))
+  }
+
   def sourcesJar = T{
     val outDir = T.ctx().dest/up
     val n = name()

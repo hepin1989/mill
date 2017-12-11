@@ -113,6 +113,7 @@ object Bin extends MillModule {
 
   def releaseAssembly = T{
     createAssembly(
+      T.ctx().dest,
       (runDepClasspath().filter(_.path.ext != "pom") ++
         Seq(resources(), compile().classes)).map(_.path).filter(exists),
       prependShellScript =
