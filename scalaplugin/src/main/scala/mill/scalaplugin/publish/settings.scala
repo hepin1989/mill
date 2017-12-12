@@ -76,8 +76,8 @@ case class Developer(
   id: String,
   name: String,
   url: String,
-  organization: String,
-  organizationUrl: String
+  organization: Option[String] = None,
+  organizationUrl: Option[String] = None
 )
 
 case class PomSettings(

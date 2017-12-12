@@ -8,7 +8,6 @@ trait PomFile {
   val head = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 
   //TODO - not only jar packaging support?
-  //TODO - description
   def generatePom(
     artifact: Artifact,
     dependencies: Seq[Dependency],
@@ -21,10 +20,11 @@ trait PomFile {
         xmlns ="http://maven.apache.org/POM/4.0.0">
 
         <modelVersion>4.0.0</modelVersion>
+        <name>{artifact.name}</name>
         <groupId>{artifact.group}</groupId>
         <artifactId>{artifact.id}</artifactId>
         <packaging>jar</packaging>
-        <description></description>
+        <description>{artifact.name}</description>
 
         <version>{artifact.version}</version>
         <url>{pomSettings.url}</url>
@@ -62,8 +62,12 @@ trait PomFile {
     <developer>
       <id>{id}</id>
       <name>{name}</name>
-      <organization>{organization}</organization>
-      <organizationUrl>{organizationUrl}</organizationUrl>
+      {
+        organization.map { org => <organization>{org}</organization> }.getOrElse("")
+      }
+      {
+        organizationUrl.map { orgUrl => <organizationUrl>{orgUrl}</organizationUrl> }.getOrElse("")
+      }
     </developer>
   }
 

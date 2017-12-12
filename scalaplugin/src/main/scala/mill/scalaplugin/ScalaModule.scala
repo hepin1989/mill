@@ -210,18 +210,16 @@ trait ScalaModule extends Module with TaskModule{ outer =>
   def classpath = T{ Seq(resources(), compile().classes) }
 
   def jar = T{
-    val outDir = T.ctx().dest/up
-    val n = name()
-    val v = version()
-    val jarName = s"${n}-${v}.jar"
-    val dest = outDir/jarName
-    createJar(dest, Seq(resources(), compile().classes).map(_.path).filter(exists), mainClass())
-    PathRef(dest)
+    val jarName = s"${name()}_${scalaBinaryVersion()}-${version()}.jar"
+    createJar(
+      T.ctx().dest / jarName,
+      Seq(resources(), compile().classes).map(_.path).filter(exists),
+      mainClass()
+    )
   }
 
   def docsJar = T{
     val outDir = T.ctx().dest
-    mkdir(outDir)
 
     val javadocDir = outDir / 'javadoc
     mkdir(javadocDir)
@@ -231,7 +229,7 @@ trait ScalaModule extends Module with TaskModule{ outer =>
       files ++ Seq("-d", javadocDir.toNIO.toString, "-usejavacp")
     }
 
-    val jarName = s"${name()}-${version()}-javadoc.jar"
+    val jarName = s"${name()}_${scalaBinaryVersion()}-${version()}-javadoc.jar"
 
     subprocess(
       "scala.tools.nsc.ScalaDoc",
@@ -242,16 +240,12 @@ trait ScalaModule extends Module with TaskModule{ outer =>
   }
 
   def sourcesJar = T{
-    val outDir = T.ctx().dest/up
-    val n = name()
-    val v = version()
-    val jarName = s"${n}-${v}-sources.jar"
-    val dest = outDir/jarName
+    val outDir = T.ctx().dest
+    val jarName = s"${name()}_${scalaBinaryVersion()}-${version()}-sources.jar"
 
     val inputs = Seq(sources(), resources()).map(_.path).filter(exists)
 
-    createJar(dest, inputs)
-    PathRef(dest)
+    createJar(outDir / jarName, inputs)
   }
 
   def run() = T.command{
@@ -278,15 +272,39 @@ trait ScalaModule extends Module with TaskModule{ outer =>
   // build artifact name as "mill-2.12.4" instead of "mill-2.12"
   def useFullScalaVersionForPublish: Boolean = false
 
-  def publish() = T.command {
-    val file = jar() // there should be sequence of files
+  def pom = T{
+    // pom part
     val scalaFull = scalaVersion()
     val scalaBin = scalaBinaryVersion()
+    val org = organization()
+    val n = name()
+    val v = version()
     val deps = ivyDeps()
     val dependencies = deps.map(d => Artifact.fromDep(d, scalaFull, scalaBin))
     val artScalaVersion = if (useFullScalaVersionForPublish) scalaFull else scalaBin
-    val artifact = ScalaArtifact(organization(), name(), version(), artScalaVersion)
-    Sonatype.publish(file.path, artifact, dependencies)(T.ctx().log)
+    val artifact = ScalaArtifact(org, n, v, artScalaVersion)
+    val settings =
+      PomSettings(
+        artifact.group,
+        "url",
+        licenses = Seq(License("Apache License, Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0")),
+        scm = SCM("", ""),
+        developers = Seq(
+          Developer("rockjam", "Nikolai Tatarinov", "https://github.com/rockjam")
+        )
+      )
+
+    val pom = PomFile.generatePom(artifact, dependencies, settings)
+    val pomName = s"${n}_${scalaBin}-${v}.pom"
+    val pomPath = T.ctx().dest / pomName
+    write.over(pomPath, pom)
+    PathRef(pomPath)
+  }
+
+  def publish() = T.command {
+    val artifacts = Seq(jar(), sourcesJar(), docsJar(), pom()).map(_.path)
+    val artifact = ScalaArtifact(organization(), name(), version(), scalaBinaryVersion())
+    SonatypeLib.publish(artifacts, artifact)(T.ctx().log)
   }
 
   def publishLocal() = T.command {
