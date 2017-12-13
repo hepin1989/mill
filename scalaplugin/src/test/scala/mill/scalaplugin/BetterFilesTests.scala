@@ -2,11 +2,12 @@ package mill.scalaplugin
 
 import ammonite.ops.ImplicitWd._
 import ammonite.ops._
-import mill.define.{Cross,Task}
+import mill.define.{Cross, Task}
 import mill.discover.Discovered
 import mill.eval.Result
 import utest._
 import mill.util.JsonFormatters._
+import mill.util.TestEvaluator
 
 object BetterFilesBuild{
   trait BetterFilesModule extends SbtScalaModule{ outer =>

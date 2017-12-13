@@ -7,6 +7,7 @@ import mill.define.{Target, Task}
 import mill.discover.Discovered
 import mill.discover.Mirror.LabelledTarget
 import mill.eval.Result
+import mill.util.TestEvaluator
 import sbt.internal.inc.CompileFailed
 import utest._
 
