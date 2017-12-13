@@ -1,3 +1,5 @@
+import java.io.File
+
 import ammonite.ops._
 import mill._
 import mill.scalaplugin._
@@ -101,9 +103,41 @@ object ScalaPlugin extends MillModule {
 
 }
 
-object Bin extends MillModule {
+
+object ScalaJSBridge_0_6 extends MillModule{
+  def basePath = pwd / 'scalajsplugin / 'bridge_0_6
+  override def ivyDeps = Seq(
+    Dep("org.scala-js", "scalajs-tools", "0.6.21")
+  )
+}
+
+object ScalaJSBridge_1_0 extends MillModule{
+  def basePath = pwd / 'scalajsplugin / 'bridge_1_0
+  override def ivyDeps = Seq(
+    Dep("org.scala-js", "scalajs-tools", "1.0.0-M2")
+  )
+}
+
+object ScalaJSPlugin extends MillModule {
 
   override def projectDeps = Seq(ScalaPlugin)
+  def basePath = pwd / 'scalajsplugin
+
+  def bridgeClasspath(runDepClasspath: Seq[PathRef], classes: PathRef) =
+    (runDepClasspath :+ classes).map(_.path).mkString(File.pathSeparator)
+  override def testArgs = T{
+    val mapping = Map(
+      "MILL_SCALAJS_BRIDGE_0_6" -> bridgeClasspath(ScalaJSBridge_0_6.runDepClasspath(), ScalaJSBridge_0_6.compile().classes),
+      "MILL_SCALAJS_BRIDGE_1_0" -> bridgeClasspath(ScalaJSBridge_1_0.runDepClasspath(), ScalaJSBridge_1_0.compile().classes)
+    )
+    for((k, v) <- mapping.toSeq) yield s"-D$k=$v"
+  }
+
+}
+
+object Bin extends MillModule {
+
+  override def projectDeps = Seq(ScalaPlugin, ScalaJSPlugin)
   def basePath = pwd / 'bin
 
   def releaseAssembly = T{
@@ -118,6 +152,6 @@ object Bin extends MillModule {
 
   override def prependShellScript =
     "#!/usr/bin/env sh\n" +
-    s"""exec java ${ScalaPlugin.testArgs().mkString(" ")} $$JAVA_OPTS -cp "$$0" mill.Main "$$@" """
+    s"""exec java ${(ScalaPlugin.testArgs() ++ ScalaJSPlugin.testArgs()).mkString(" ")} $$JAVA_OPTS -cp "$$0" mill.Main "$$@" """
 
 }
