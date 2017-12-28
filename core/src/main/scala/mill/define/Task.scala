@@ -29,7 +29,7 @@ abstract class Task[+T] extends Task.Ops[T] with Applyable[Task, T]{
   def asTarget: Option[Target[T]] = None
   def asCommand: Option[Command[T]] = None
   def asPersistent: Option[Persistent[T]] = None
-  def self = this
+  implicit val self: Task[T] = this
 }
 
 trait Target[+T] extends Task[T]{

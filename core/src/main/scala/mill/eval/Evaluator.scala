@@ -1,6 +1,7 @@
 package mill.eval
 
 import java.net.URLClassLoader
+import java.util.concurrent.atomic.AtomicInteger
 
 import ammonite.ops._
 import ammonite.runtime.SpecialClassLoader
@@ -163,7 +164,16 @@ class Evaluator[T](val workspacePath: Path,
                 workerCache.getOrElseUpdate(x, x.make()).asInstanceOf[T]
               }
             }
-          )
+          ){
+            private[this] lazy val taskCounter = new AtomicInteger(0)
+            override def dest: Path = {
+              if (taskCounter.getAndIncrement() == 0){
+                super.dest
+              }else{
+                throw new IllegalAccessException("The dest call on the Ctx should only be called once,if you are using it from the same task,please cache it to a val.")
+              }
+            }
+          }
 
           val out = System.out
           val err = System.err

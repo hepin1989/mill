@@ -72,18 +72,19 @@ object Core extends MillModule {
   def basePath = pwd / 'core
 
   def generatedSources = T{
-    mkdir(T.ctx().dest)
-    shared.generateSources(T.ctx().dest)
-    PathRef(T.ctx().dest)
+    val dest = T.ctx().dest
+    mkdir(dest)
+    shared.generateSources(dest)
+    PathRef(dest)
   }
 
   def allSources = super.allSources() ++ Seq(generatedSources())
   val test = new Tests{
     def generatedSources = T{
-      mkdir(T.ctx().dest)
-      shared.generateTests(T.ctx().dest)
-      PathRef(T.ctx().dest)
-
+      val dest = T.ctx().dest
+      mkdir(dest)
+      shared.generateTests(dest)
+      PathRef(dest)
     }
     def allSources = super.allSources() ++ Seq(generatedSources())
   }
