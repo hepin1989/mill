@@ -13,10 +13,11 @@ import mill._
 
 object JavaCompileJarTests extends TestSuite{
   def compileAll(sources: Seq[PathRef])(implicit ctx: DestCtx) = {
-    mkdir(ctx.dest)
+    val dest = ctx.dest
+    mkdir(dest)
     import ammonite.ops._
-    %("javac", sources.map(_.path.toString()), "-d", ctx.dest)(wd = ctx.dest)
-    PathRef(ctx.dest)
+    %("javac", sources.map(_.path.toString()), "-d", dest)(wd = dest)
+    PathRef(dest)
   }
 
   val tests = Tests{
@@ -150,7 +151,8 @@ object JavaCompileJarTests extends TestSuite{
 
       val Left(Result.Exception(ex)) = eval(Build.run("test.BarFour"))
 
-      assert(ex.getMessage.contains("Could not find or load main class"))
+      assert(ex.getMessage.contains("Could not find or load main class") ||
+        ex.getMessage.contains("错误: 找不到或无法加载主类"))
 
       append(
         sourceRootPath / "Bar.java",
